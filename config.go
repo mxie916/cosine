@@ -7,19 +7,19 @@ import (
 )
 
 type Config struct {
-	v map[string]interface{}
+	data map[string]interface{}
 }
 
 // 加载配置文件
 func (c *Config) load(filename string) {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
-		panic("配置文件{" + filename + "}加载失败.")
+		panic("配置文件<" + filename + ">加载失败.")
 	}
 
-	err = json.Unmarshal(data, &c.v)
+	err = json.Unmarshal(data, &c.data)
 	if err != nil {
-		panic("配置文件{" + filename + "}格式错误.")
+		panic("配置文件<" + filename + ">格式错误.")
 	}
 }
 
@@ -33,12 +33,12 @@ func (c *Config) Get(key string) interface{} {
 	// 支持以点分割的多个key获取值
 	keys := strings.Split(key, ".")
 
-	var v interface{}
-	v = c.v
+	var data interface{}
+	data = c.data
 	for _, k := range keys {
-		val := v.(map[string]interface{})
-		v = val[k]
+		val := data.(map[string]interface{})
+		data = val[k]
 	}
 
-	return v
+	return data
 }
