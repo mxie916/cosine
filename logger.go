@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"runtime"
 	"sync"
 	"time"
 )
@@ -52,6 +51,7 @@ type Logger struct {
 	maxFileSize     int64
 	currentFileDate *time.Time
 	logObj          *_FILE
+	lg              *log.Logger
 }
 
 // 设置日志级别
@@ -62,6 +62,9 @@ func (self *Logger) SetLevel(level LEVEL) {
 // 设置是否在控制台打印
 func (self *Logger) SetConsole(isConsole bool) {
 	self.consoleFlag = isConsole
+	if isConsole {
+		self.lg = log.New(os.Stdout, "[Cosine] ", log.Ldate|log.Ltime|log.Lmicroseconds|log.Lshortfile)
+	}
 }
 
 // 设置是否采用文件打印（按文件大小滚动）
@@ -157,7 +160,7 @@ func (self *Logger) Fatal(v ...interface{}) {
 }
 
 // 文件打印
-func (self *Logger) filePrint(level LEVEL, levelStr string, v ...interface{}) {
+func (self *Logger) filePrint(l LEVEL, level string, v ...interface{}) {
 	defer func() {
 		if err := recover(); err != nil {
 			panic(err)
@@ -171,42 +174,28 @@ func (self *Logger) filePrint(level LEVEL, levelStr string, v ...interface{}) {
 	}
 
 	// 写日志
-	if self.logLevel >= level {
+	if l <= self.logLevel {
 		// 将需要打印的内容拼接成字符串
-		s := ""
+		msg := ""
 		for i := 0; i < len(v); i++ {
 			if i > 0 {
-				s += " "
+				msg += " "
 			}
-			s += fmt.Sprint(v[i])
+			msg += fmt.Sprint(v[i])
 		}
 
 		// 打印
 		if self.logObj != nil {
-			self.logObj.lg.Output(3, fmt.Sprintln(levelStr, s))
+			self.logObj.lg.Output(3, level+" "+msg)
 		}
-		self.consolePrint(levelStr, s)
+		self.consolePrint(level, msg)
 	}
 }
 
 // 控制台打印
 func (self *Logger) consolePrint(level, msg string) {
 	if self.consoleFlag {
-		// 获取文件名&行号
-		_, file, line, _ := runtime.Caller(3)
-		short := file
-		for i := len(file) - 1; i > 0; i-- {
-			if file[i] == '/' {
-				short = file[i+1:]
-				break
-			}
-		}
-		file = short
-
-		// 控制台打印
-		log.SetPrefix("[Cosine] ")
-		log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
-		log.Println(file, line, level, msg)
+		self.lg.Output(4, level+" "+msg)
 	}
 }
 
