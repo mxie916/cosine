@@ -14,6 +14,9 @@ func Version() string {
 	return _VERSION
 }
 
+// 路由处理器
+type Handler interface{}
+
 type Cosine struct {
 	*Router
 	protocol string
@@ -57,29 +60,31 @@ func (cos *Cosine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// 匹配请求对应的处理器
-	if handler, _, ok := cos.Router.match(req.Method, path); ok {
-		h := reflect.ValueOf(handler)
-		if h.Kind() == reflect.Func {
-			// 获取handler参数数量
-			num := h.Type().NumIn()
+	if handlers, _, ok := cos.Router.match(req.Method, path); ok {
+		for _, handler := range handlers {
+			h := reflect.ValueOf(handler)
+			if h.Kind() == reflect.Func {
+				// 获取handler参数数量
+				num := h.Type().NumIn()
 
-			// 临时处理：依赖注入参数
-			params := make([]reflect.Value, num)
-			for i := 0; i < num; i++ {
-				switch reflect.Type(h.Type().In(i)).String() {
-				case "http.ResponseWriter":
-					// 注入http.ResponseWriter
-					params[i] = reflect.ValueOf(w)
-				case "*http.Request":
-					// 注入*http.Request
-					params[i] = reflect.ValueOf(req)
-				default:
-					// TODO
+				// 临时处理：依赖注入参数
+				params := make([]reflect.Value, num)
+				for i := 0; i < num; i++ {
+					switch reflect.Type(h.Type().In(i)).String() {
+					case "http.ResponseWriter":
+						// 注入http.ResponseWriter
+						params[i] = reflect.ValueOf(w)
+					case "*http.Request":
+						// 注入*http.Request
+						params[i] = reflect.ValueOf(req)
+					default:
+						// TODO
+					}
 				}
-			}
 
-			// 执行handle
-			h.Call(params)
+				// 执行handle
+				h.Call(params)
+			}
 		}
 	}
 }

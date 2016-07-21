@@ -1,18 +1,13 @@
 package cosine
 
-import (
-	"strings"
-)
-
-// 路由处理器
-type Handler interface{}
+import "strings"
 
 // url信息结构体
 type url struct {
-	path    string
-	parts   []string
-	wild    bool
-	handler Handler
+	path     string
+	parts    []string
+	wild     bool
+	handlers []Handler
 }
 
 type Router struct {
@@ -20,63 +15,63 @@ type Router struct {
 }
 
 // 添加GET请求处理
-func (r *Router) GET(path string, handler Handler) {
-	r.handle("GET", path, handler)
-	r.handle("HEAD", path, handler)
+func (r *Router) GET(path string, handlers ...Handler) {
+	r.handle("GET", path, handlers)
+	r.handle("HEAD", path, handlers)
 }
 
 // 添加HEAD请求处理
-func (r *Router) HEAD(path string, handler Handler) {
-	r.handle("HEAD", path, handler)
+func (r *Router) HEAD(path string, handlers ...Handler) {
+	r.handle("HEAD", path, handlers)
 }
 
 // 添加OPTIONS请求处理
-func (r *Router) OPTIONS(path string, handler Handler) {
-	r.handle("OPTIONS", path, handler)
+func (r *Router) OPTIONS(path string, handlers ...Handler) {
+	r.handle("OPTIONS", path, handlers)
 }
 
 // 添加POST请求处理
-func (r *Router) POST(path string, handler Handler) {
-	r.handle("POST", path, handler)
+func (r *Router) POST(path string, handlers ...Handler) {
+	r.handle("POST", path, handlers)
 }
 
 // 添加PUT请求处理
-func (r *Router) PUT(path string, handler Handler) {
-	r.handle("PUT", path, handler)
+func (r *Router) PUT(path string, handlers ...Handler) {
+	r.handle("PUT", path, handlers)
 }
 
 // 添加PATCH请求处理
-func (r *Router) PATCH(path string, handler Handler) {
-	r.handle("PATCH", path, handler)
+func (r *Router) PATCH(path string, handlers ...Handler) {
+	r.handle("PATCH", path, handlers)
 }
 
 // 添加DELETE请求处理
-func (r *Router) DELETE(path string, handler Handler) {
-	r.handle("DELETE", path, handler)
+func (r *Router) DELETE(path string, handlers ...Handler) {
+	r.handle("DELETE", path, handlers)
 }
 
 // 统一处理请求
-func (r *Router) handle(method, path string, handler Handler) {
+func (r *Router) handle(method, path string, handlers []Handler) {
 	u := &url{
 		path,
 		strings.Split(path[1:], "/"),
 		path[len(path)-1:] == "*",
-		handler,
+		handlers,
 	}
 	r.urls[method] = append(r.urls[method], u)
 }
 
 // 匹配请求对应的处理器&获取url地址中的参数
-func (r *Router) match(method, path string) (Handler, map[string]interface{}, bool) {
+func (r *Router) match(method, path string) ([]Handler, map[string]interface{}, bool) {
 	segments := strings.Split(path[1:], "/")
 	for _, url := range r.urls[method] {
 		// 全匹配
 		if url.path == path {
-			return url.handler, nil, true
+			return url.handlers, nil, true
 		}
 		// 尝试匹配带有通配符(*)和参数的请求
 		if vars, ok := r.try(url, segments); ok {
-			return url.handler, vars, true
+			return url.handlers, vars, true
 		}
 	}
 
