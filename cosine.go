@@ -14,11 +14,19 @@ func Version() string {
 	return _VERSION
 }
 
-// 路由处理器
+// 处理器
 type Handler interface{}
+
+// 校验处理器
+func chkHandler(h Handler) {
+	if reflect.TypeOf(h).Kind() != reflect.Func {
+		panic("Cosine要求所有处理器必须是一个函数")
+	}
+}
 
 type Cosine struct {
 	*Router
+	handlers []Handler
 	protocol string
 	host     string
 	port     int
@@ -50,7 +58,7 @@ func New(args ...string) *Cosine {
 }
 
 // 实现http.Handler接口
-func (cos *Cosine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (self *Cosine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	path := req.URL.Path
 	l := len(path)
 	// 处理以"/"结束的请求
@@ -60,7 +68,7 @@ func (cos *Cosine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// 匹配请求对应的处理器
-	if handlers, _, ok := cos.Router.match(req.Method, path); ok {
+	if handlers, _, ok := self.Router.match(req.Method, path); ok {
 		for _, handler := range handlers {
 			h := reflect.ValueOf(handler)
 			if h.Kind() == reflect.Func {
@@ -89,14 +97,20 @@ func (cos *Cosine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// 添加中间件
+func (self *Cosine) Use(h Handler) {
+	chkHandler(h)
+	self.handlers = append(self.handlers, h)
+}
+
 // 运行Cosine
-func (cos *Cosine) Run() {
+func (self *Cosine) Run() {
 	var err error
-	switch cos.protocol {
+	switch self.protocol {
 	case "http":
-		err = http.ListenAndServe(cos.host+":"+strconv.Itoa(cos.port), cos)
+		err = http.ListenAndServe(self.host+":"+strconv.Itoa(self.port), self)
 	case "https":
-		err = http.ListenAndServeTLS(cos.host+":"+strconv.Itoa(cos.port), "cert.pem", "key.pem", cos)
+		err = http.ListenAndServeTLS(self.host+":"+strconv.Itoa(self.port), "cert.pem", "key.pem", self)
 	default:
 		panic("服务启动失败.")
 	}
