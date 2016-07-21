@@ -204,6 +204,8 @@ func (self *Logger) consolePrint(level, msg string) {
 		file = short
 
 		// 控制台打印
+		log.SetPrefix("[Cosine] ")
+		log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
 		log.Println(file, line, level, msg)
 	}
 }
@@ -245,11 +247,13 @@ func (self *Logger) chkFile4Size() {
 
 		// 创建新的日志文件
 		self.logObj.logfile, _ = os.Create(filePath)
-		self.logObj.lg = log.New(self.logObj.logfile, "", log.Ldate|log.Ltime|log.Lshortfile)
+		self.logObj.lg = log.New(self.logObj.logfile, "[Cosine] ", log.Ldate|log.Ltime|log.Lmicroseconds|log.Lshortfile)
 	} else {
-		// 打开之前的日志文件
-		self.logObj.logfile, _ = os.OpenFile(filePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0666)
-		self.logObj.lg = log.New(self.logObj.logfile, "", log.Ldate|log.Ltime|log.Lshortfile)
+		if self.logObj.logfile == nil || self.logObj.lg == nil {
+			// 打开之前的日志文件
+			self.logObj.logfile, _ = os.OpenFile(filePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0666)
+			self.logObj.lg = log.New(self.logObj.logfile, "[Cosine] ", log.Ldate|log.Ltime|log.Lmicroseconds|log.Lshortfile)
+		}
 	}
 }
 
@@ -276,14 +280,16 @@ func (self *Logger) chkFile4Daily() {
 
 		// 创建新的日志文件
 		self.logObj.logfile, _ = os.Create(filePath)
-		self.logObj.lg = log.New(self.logObj.logfile, "", log.Ldate|log.Ltime|log.Lshortfile)
+		self.logObj.lg = log.New(self.logObj.logfile, "[Cosine] ", log.Ldate|log.Ltime|log.Lmicroseconds|log.Lshortfile)
 
 		// 更新日期
 		self.currentFileDate = &t
 	} else {
-		// 打开之前的日志文件
-		self.logObj.logfile, _ = os.OpenFile(filePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0666)
-		self.logObj.lg = log.New(self.logObj.logfile, "", log.Ldate|log.Ltime|log.Lshortfile)
+		if self.logObj.logfile == nil || self.logObj.lg == nil {
+			// 打开之前的日志文件
+			self.logObj.logfile, _ = os.OpenFile(filePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0666)
+			self.logObj.lg = log.New(self.logObj.logfile, "[Cosine] ", log.Ldate|log.Ltime|log.Lmicroseconds|log.Lshortfile)
+		}
 	}
 }
 
