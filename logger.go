@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"runtime"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -68,6 +67,7 @@ func (self *Logger) SetConsole(isConsole bool) {
 // 设置是否采用文件打印（按文件大小滚动）
 func (self *Logger) SetRollingFile(fileDir, fileName string, maxSize int64, _unit UNIT) {
 	self.rollingFileFlag = true
+	self.dailyFileFlag = false
 
 	// 设置文件最大值
 	self.maxFileSize = maxSize * int64(_unit)
@@ -83,7 +83,7 @@ func (self *Logger) SetRollingFile(fileDir, fileName string, maxSize int64, _uni
 	self.logObj.mu.Lock()
 	defer self.logObj.mu.Unlock()
 
-	self.handleFile4Size()
+	self.chkFile4Size()
 
 	// 1s检测一次文件是否需要滚动
 	go func(logger *Logger) {
@@ -91,7 +91,7 @@ func (self *Logger) SetRollingFile(fileDir, fileName string, maxSize int64, _uni
 		for {
 			select {
 			case <-timer.C:
-				logger.handleFile4Size()
+				logger.chkFile4Size()
 			}
 		}
 	}(self)
@@ -100,6 +100,7 @@ func (self *Logger) SetRollingFile(fileDir, fileName string, maxSize int64, _uni
 // 设置是否采用文件打印（按文件日期滚动）
 func (self *Logger) SetDailyFile(fileDir, fileName string) {
 	self.dailyFileFlag = true
+	self.rollingFileFlag = false
 
 	// 设置当前日期
 	t, _ := time.Parse(DATEFORMAT, time.Now().Format(DATEFORMAT))
@@ -116,7 +117,7 @@ func (self *Logger) SetDailyFile(fileDir, fileName string) {
 	self.logObj.mu.Lock()
 	defer self.logObj.mu.Unlock()
 
-	self.handleFile4Daily()
+	self.chkFile4Daily()
 
 	// 1s检测一次文件是否需要滚动
 	go func(logger *Logger) {
@@ -124,7 +125,7 @@ func (self *Logger) SetDailyFile(fileDir, fileName string) {
 		for {
 			select {
 			case <-timer.C:
-				logger.handleFile4Daily()
+				logger.chkFile4Daily()
 			}
 		}
 	}(self)
@@ -132,27 +133,27 @@ func (self *Logger) SetDailyFile(fileDir, fileName string) {
 
 // 打印DEBUG级别日志
 func (self *Logger) Debug(v ...interface{}) {
-	self.filePrint(DEBUG, "debug", v)
+	self.filePrint(DEBUG, "[DEBUG]", v)
 }
 
 // 打印INFO级别日志
 func (self *Logger) Info(v ...interface{}) {
-	self.filePrint(INFO, "info", v)
+	self.filePrint(INFO, "[INFO ]", v)
 }
 
 // 打印WARN级别日志
 func (self *Logger) Warn(v ...interface{}) {
-	self.filePrint(WARN, "warn", v)
+	self.filePrint(WARN, "[WARN ]", v)
 }
 
 // 打印ERROR级别日志
 func (self *Logger) Error(v ...interface{}) {
-	self.filePrint(ERROR, "error", v)
+	self.filePrint(ERROR, "[ERROR]", v)
 }
 
 // 打印FATAL级别日志
 func (self *Logger) Fatal(v ...interface{}) {
-	self.filePrint(FATAL, "fatal", v)
+	self.filePrint(FATAL, "[FATAL]", v)
 }
 
 // 文件打印
@@ -171,15 +172,25 @@ func (self *Logger) filePrint(level LEVEL, levelStr string, v ...interface{}) {
 
 	// 写日志
 	if self.logLevel >= level {
-		if self.logObj != nil {
-			self.logObj.lg.Output(3, fmt.Sprintln(levelStr, v))
+		// 将需要打印的内容拼接成字符串
+		s := ""
+		for i := 0; i < len(v); i++ {
+			if i > 0 {
+				s += " "
+			}
+			s += fmt.Sprint(v[i])
 		}
-		self.consolePrint(levelStr, v)
+
+		// 打印
+		if self.logObj != nil {
+			self.logObj.lg.Output(3, fmt.Sprintln(levelStr, s))
+		}
+		self.consolePrint(levelStr, s)
 	}
 }
 
 // 控制台打印
-func (self *Logger) consolePrint(v ...interface{}) {
+func (self *Logger) consolePrint(level, msg string) {
 	if self.consoleFlag {
 		// 获取文件名&行号
 		_, file, line, _ := runtime.Caller(3)
@@ -193,7 +204,7 @@ func (self *Logger) consolePrint(v ...interface{}) {
 		file = short
 
 		// 控制台打印
-		log.Println(file, strconv.Itoa(line), v)
+		log.Println(file, line, level, msg)
 	}
 }
 
@@ -208,7 +219,7 @@ func (self *Logger) mklogdir(dir string) {
 }
 
 // 检测及创建日志文件（大小滚动）
-func (self *Logger) handleFile4Size() {
+func (self *Logger) chkFile4Size() {
 	// 获取当前日志文件全路径
 	filePath := self.logObj.dir + "/" + self.logObj.name
 
@@ -243,7 +254,7 @@ func (self *Logger) handleFile4Size() {
 }
 
 // 检测及创建日志文件（日期滚动）
-func (self *Logger) handleFile4Daily() {
+func (self *Logger) chkFile4Daily() {
 	// 获取当前日志文件全路径
 	filePath := self.logObj.dir + "/" + self.logObj.name
 
