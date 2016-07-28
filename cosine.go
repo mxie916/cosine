@@ -108,7 +108,6 @@ func (self *Cosine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				}
 
 				// 执行handle
-				fmt.Printf("%v\n", params)
 				h.Call(params)
 			}
 		}
