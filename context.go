@@ -76,3 +76,8 @@ func (self *Context) ParamToFloat64(name string) float64 {
 func (self *Context) Map(v interface{}) {
 	self.injts[reflect.TypeOf(v)] = reflect.ValueOf(v)
 }
+
+// 获取中间件实例
+func (self *Context) GetVal(t reflect.Type) reflect.Value {
+	return self.injts[t]
+}
