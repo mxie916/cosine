@@ -72,39 +72,43 @@ func New(args ...string) *Cosine {
 }
 
 // 实现http.Handler接口
-func (self *Cosine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	path := req.URL.Path
+func (self *Cosine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path
 	l := len(path)
 	// 处理以"/"结束的请求
 	if l > 1 && path[l-1:] == "/" {
-		http.Redirect(w, req, path[l-1:], 301)
+		http.Redirect(w, r, path[l-1:], 301)
 		return
 	}
 
 	// 匹配请求对应的处理器
-	if handlers, _, ok := self.Router.match(req.Method, path); ok {
+	if handlers, vars, ok := self.Router.match(r.Method, path); ok {
+		// 实例化Context
+		ctx := &Context{
+			Cosine: self,
+			params: vars,
+			injts:  make(map[reflect.Type]reflect.Value),
+			Req:    r,
+			Resp:   w,
+		}
+
+		// 将Context添加为内置对象
+		ctx.Map(ctx)
+
 		for _, handler := range handlers {
 			h := reflect.ValueOf(handler)
 			if h.Kind() == reflect.Func {
 				// 获取handler参数数量
 				num := h.Type().NumIn()
 
-				// 临时处理：依赖注入参数
+				// 依赖注入参数
 				params := make([]reflect.Value, num)
 				for i := 0; i < num; i++ {
-					switch reflect.Type(h.Type().In(i)).String() {
-					case "http.ResponseWriter":
-						// 注入http.ResponseWriter
-						params[i] = reflect.ValueOf(w)
-					case "*http.Request":
-						// 注入*http.Request
-						params[i] = reflect.ValueOf(req)
-					default:
-						// TODO
-					}
+					params[i] = ctx.injts[h.Type().In(i)]
 				}
 
 				// 执行handle
+				fmt.Printf("%v\n", params)
 				h.Call(params)
 			}
 		}
