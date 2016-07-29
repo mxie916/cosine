@@ -78,6 +78,6 @@ func (self *Context) Map(v interface{}) {
 }
 
 // 获取中间件实例
-func (self *Context) GetVal(t reflect.Type) reflect.Value {
+func (self *Context) getVal(t reflect.Type) reflect.Value {
 	return self.injts[t]
 }

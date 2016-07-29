@@ -104,7 +104,7 @@ func (self *Cosine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				// 依赖注入参数
 				params := make([]reflect.Value, num)
 				for i := 0; i < num; i++ {
-					params[i] = ctx.GetVal(h.Type().In(i))
+					params[i] = ctx.getVal(h.Type().In(i))
 				}
 
 				// 执行handle
