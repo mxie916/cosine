@@ -91,10 +91,12 @@ func (self *Cosine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Req:    r,
 			Resp:   w,
 		}
-
 		// 将Context添加为内置对象
 		ctx.Map(ctx)
 
+		// 添加全局handlers
+		handlers = append(self.handlers, handlers...)
+		// 依次执行handlers
 		for _, handler := range handlers {
 			h := reflect.ValueOf(handler)
 			if h.Kind() == reflect.Func {
