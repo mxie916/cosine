@@ -15,6 +15,7 @@
 package cosine
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"reflect"
@@ -81,18 +82,23 @@ func (self *Cosine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 设置返回参数
+	w.Header().Set("Content-Type", "application/json;charset=utf-8")
+
+	// 实例化Context
+	ctx := &Context{
+		Cosine: self,
+		injts:  make(map[reflect.Type]reflect.Value),
+		Req:    r,
+		Res:    new(Response),
+	}
+	// 将Context添加为内置对象
+	ctx.Map(ctx)
+
 	// 匹配请求对应的处理器
 	if handlers, vars, ok := self.Router.match(r.Method, path); ok {
-		// 实例化Context
-		ctx := &Context{
-			Cosine: self,
-			params: vars,
-			injts:  make(map[reflect.Type]reflect.Value),
-			Req:    r,
-			Resp:   w,
-		}
-		// 将Context添加为内置对象
-		ctx.Map(ctx)
+		// url中的参数
+		ctx.params = vars
 
 		// 添加全局handlers
 		handlers = append(self.handlers, handlers...)
@@ -113,7 +119,14 @@ func (self *Cosine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				h.Call(params)
 			}
 		}
+	} else {
+		// 找不到接口
+		ctx.Res.NotFoundWrapper()
 	}
+
+	// 输出
+	res, _ := json.Marshal(ctx.Res)
+	w.Write(res)
 }
 
 // 添加中间件

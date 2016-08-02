@@ -24,7 +24,7 @@ type Context struct {
 	params map[string]interface{}
 	injts  map[reflect.Type]reflect.Value
 	Req    *http.Request
-	Resp   http.ResponseWriter
+	Res    *Response
 }
 
 // 获取url中的参数
