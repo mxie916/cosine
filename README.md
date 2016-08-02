@@ -43,3 +43,14 @@ func main() {
 	cos.Run()
 }
 ```
+
+# 配置文件示例
+```json
+{
+	"server": {
+		"protocol": "http",
+		"host": "",
+		"port": 8080
+	}
+}
+```
