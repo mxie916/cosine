@@ -11,7 +11,7 @@
 - [x] ~~*将返回结果封装为JSON格式*~~
 - [x] ~~*自带类似log4j的日志系统*~~
 
-# 使用示例
+# 使用示例main.go
 ```go
 package main
 
@@ -44,7 +44,7 @@ func main() {
 }
 ```
 
-# 配置文件示例
+# 配置文件示例config.json
 ```json
 {
 	"server": {
