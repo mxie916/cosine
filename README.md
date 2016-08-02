@@ -10,3 +10,36 @@
 - [x] ~~*中间件依赖注入*~~
 - [x] ~~*将返回结果封装为JSON格式*~~
 - [x] ~~*自带类似log4j的日志系统*~~
+
+# 使用示例
+```golang
+package main
+
+import "github.com/mxie916/cosine"
+
+func Home(ctx *cosine.Context) {
+	res := make(map[string]string)
+	res["name"] = "Cosine"
+	ctx.Res.DataWrapper(res)
+}
+
+func Group1(ctx *cosine.Context) {
+	ctx.Res.ExceptionWrapper(10001, "业务逻辑")
+}
+
+func Group2(ctx *cosine.Context) {
+	ctx.Res.ForbiddenWrapper()
+}
+
+func main() {
+	cos := cosine.New()
+
+	cos.GROUP("/v1", func() {
+		cos.GET("/test", Group1)
+		cos.GET("/group", Group2)
+	})
+	cos.GET("/test", Home)
+
+	cos.Run()
+}
+```
