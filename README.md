@@ -12,7 +12,7 @@
 - [x] ~~*自带类似log4j的日志系统*~~
 
 # 使用示例
-```golang
+```go
 package main
 
 import "github.com/mxie916/cosine"
@@ -35,10 +35,10 @@ func main() {
 	cos := cosine.New()
 
 	cos.GROUP("/v1", func() {
-		cos.GET("/test", Group1)
-		cos.GET("/group", Group2)
+		cos.GET("/group1", Group1)
+		cos.GET("/group2", Group2)
 	})
-	cos.GET("/test", Home)
+	cos.GET("/", Home)
 
 	cos.Run()
 }
