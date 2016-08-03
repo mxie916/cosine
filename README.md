@@ -23,12 +23,14 @@ import "github.com/mxie916/cosine"
 
 func Home(ctx *cosine.Context) {
 	res := make(map[string]string)
-	res["name"] = "Cosine"
+	res["Name"] = "Cosine"
+	res["Version"] = cosine.Version()
+
 	ctx.Res.DataWrapper(res)
 }
 
 func Group1(ctx *cosine.Context) {
-	ctx.Res.ExceptionWrapper(10001, "业务逻辑")
+	ctx.Res.ExceptionWrapper(10001, "业务逻辑异常描述")
 }
 
 func Group2(ctx *cosine.Context) {
@@ -38,11 +40,11 @@ func Group2(ctx *cosine.Context) {
 func main() {
 	cos := cosine.New()
 
+	cos.GET("/", Home)
 	cos.GROUP("/v1", func() {
 		cos.GET("/group1", Group1)
 		cos.GET("/group2", Group2)
 	})
-	cos.GET("/", Home)
 
 	cos.Run()
 }
@@ -57,4 +59,15 @@ func main() {
 		"port": 8080
 	}
 }
+```
+
+# 请求与返回
+> GET请求：
+```cmd
+curl http://localhost:8080
+```
+
+> 返回值：
+```json
+{"code":200,"message":"","data":{"Name":"Cosine","Version":"1.0.0708"}}
 ```
