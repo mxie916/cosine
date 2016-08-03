@@ -62,12 +62,6 @@ func main() {
 ```
 
 # 请求与返回
-> GET请求：
-```cmd
-curl http://localhost:8080
-```
+> GET请求：`curl http://localhost:8080`
 
-> 返回值：
-```json
-{"code":200,"message":"","data":{"Name":"Cosine","Version":"1.0.0708"}}
-```
+> 返回值：`{"code":200,"message":"","data":{"Name":"Cosine","Version":"1.0.0708"}}`
