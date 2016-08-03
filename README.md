@@ -1,5 +1,6 @@
 # cosine
-> 一个简单而高效的JSON Restful API开发框架：简化后端API开发工作，只需要专注业务逻辑实现
+> 大道至简
+> Go语言实现的JSON Restful API开发框架：简化后端API开发工作，只需要专注业务逻辑实现。
 
 # 支持特性
 - [x] ~~*支持HTTP/HTTPS请求*~~
