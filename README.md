@@ -74,8 +74,10 @@ func main() {
 ```
 
 # 请求与返回
-> GET请求：`curl -l -H "Content-type: application/json" -X POST -d '{"name":"Cosine"}'  http://localhost:8080`
+> GET请求：
 
-> 控制台：`Cosine`
+>`curl -l -H "Content-type: application/json" -X POST -d '{"name":"Cosine"}'  http://localhost:8080`
+
+> 控制台打印内容：`Cosine`
 
 > 返回值：`{"code":200,"message":"","data":{"Name":"Cosine","Version":"1.0.0708"}}`
