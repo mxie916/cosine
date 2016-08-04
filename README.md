@@ -6,7 +6,7 @@
 # 支持特性
 - [x] ~~*支持HTTP/HTTPS请求*~~
 - [x] ~~*URL路由（支持通配符；支持URL一级分组，可用于多模块、API多版本管理）*~~
-- [ ] 解析请求中的JSON数据
+- [x] ~~*解析请求中的JSON数据*~~
 - [x] ~~*配置文件基于JSON格式*~~
 - [x] ~~*中间件依赖注入*~~
 - [x] ~~*将返回结果封装为JSON格式*~~
@@ -19,12 +19,24 @@
 ```go
 package main
 
-import "github.com/mxie916/cosine"
+import (
+	"fmt"
+
+	"github.com/mxie916/cosine"
+)
+
+type P struct {
+	Name string `json:"name"`
+}
 
 func Home(ctx *cosine.Context) {
 	res := make(map[string]string)
 	res["Name"] = "Cosine"
 	res["Version"] = cosine.Version()
+	
+	p := new(P)
+	ctx.DataToJSON(p)
+	fmt.Println(p.Name)
 
 	ctx.Res.DataWrapper(res)
 }
@@ -40,7 +52,7 @@ func Group2(ctx *cosine.Context) {
 func main() {
 	cos := cosine.New()
 
-	cos.GET("/", Home)
+	cos.POST("/", Home)
 	cos.GROUP("/v1", func() {
 		cos.GET("/group1", Group1)
 		cos.GET("/group2", Group2)
@@ -62,6 +74,8 @@ func main() {
 ```
 
 # 请求与返回
-> GET请求：`curl http://localhost:8080`
+> GET请求：`curl -l -H "Content-type: application/json" -X POST -d '{"name":"Cosine"}'  http://localhost:8080`
+
+> 控制台：`Cosine`
 
 > 返回值：`{"code":200,"message":"","data":{"Name":"Cosine","Version":"1.0.0708"}}`
