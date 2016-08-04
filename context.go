@@ -15,6 +15,7 @@
 package cosine
 
 import (
+	"encoding/json"
 	"net/http"
 	"reflect"
 )
@@ -22,6 +23,7 @@ import (
 type Context struct {
 	*Cosine
 	params map[string]interface{}
+	Data   []byte
 	injts  map[reflect.Type]reflect.Value
 	Req    *http.Request
 	Res    *Response
@@ -75,6 +77,17 @@ func (self *Context) ParamToFloat64(name string) float64 {
 // 映射中间件实例
 func (self *Context) Map(v interface{}) {
 	self.injts[reflect.TypeOf(v)] = reflect.ValueOf(v)
+}
+
+// 将提交的数据转换成JSON
+func (self *Context) DataToJSON(v interface{}) {
+	if self.Req.Method != "GET" && self.Req.Method != "HEAD" && self.Req.Method != "DELETE" {
+		err := json.Unmarshal(self.Data, v)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 }
 
 // 获取中间件实例

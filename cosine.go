@@ -17,6 +17,7 @@ package cosine
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -92,6 +93,13 @@ func (self *Cosine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Req:    r,
 		Res:    new(Response),
 	}
+
+	// 获取request body中的数据
+	if r.Method != "GET" && r.Method != "HEAD" && r.Method != "DELETE" {
+		defer r.Body.Close()
+		ctx.Data, _ = ioutil.ReadAll(r.Body)
+	}
+
 	// 将Context添加为内置对象
 	ctx.Map(ctx)
 
