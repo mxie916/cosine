@@ -148,6 +148,11 @@ func (self *Logger) SetDailyFile(fileDir, fileName string) {
 	}(self)
 }
 
+// 获取设置的日志级别
+func (self *Logger) GetLevel() LEVEL {
+	return self.logLevel
+}
+
 // 打印DEBUG级别日志
 func (self *Logger) Debug(v ...interface{}) {
 	self.filePrint(DEBUG, "[DEBUG]", v)
@@ -188,7 +193,7 @@ func (self *Logger) filePrint(l LEVEL, level string, v ...interface{}) {
 	}
 
 	// 写日志
-	if l <= self.logLevel {
+	if l >= self.logLevel {
 		// 将需要打印的内容拼接成字符串
 		msg := ""
 		for i := 0; i < len(v); i++ {
