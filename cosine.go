@@ -17,6 +17,7 @@ package cosine
 import (
 	"bufio"
 	"encoding/json"
+	"flag"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -37,8 +38,12 @@ type Handler interface{}
 
 // 初始化
 func init() {
-	// 文件读取
-	fp, err := os.Open("config.ini")
+	// 获取参数
+	configPath := flag.String("config", "config.ini", "配置文件路径")
+	flag.Parse()
+
+	// 配置文件读取
+	fp, err := os.Open(*configPath)
 	if err != nil {
 		panic(err)
 	}
@@ -57,18 +62,15 @@ func init() {
 		if len(l) == 0 || l[0] == '#' {
 			continue
 		}
-
-		// 获取section名称
+		// 获取当前section
 		if l[0] == '[' {
 			currentSection = strings.TrimSpace(l[1 : len(l)-1])
 			continue
 		}
-
-		// 跳过无用的配置
+		// 跳过对于cosine无用的配置
 		if envSection != "" && envSection != currentSection {
 			continue
 		}
-
 		parts := strings.SplitN(l, "=", 2)
 		// 跳过异常配置
 		if len(parts) != 2 {
@@ -189,26 +191,27 @@ func (self *Cosine) Use(h Handler) {
 // 运行Cosine
 func (self *Cosine) Run() {
 	var err error
-	host := os.Getenv("server.host")
 	switch os.Getenv("server.protocol") {
 	case "http":
 		if self.logger.GetLevel() <= INFO {
+			host := os.Getenv("server.host")
 			if host == "" {
 				host = "127.0.0.1"
 			}
 			self.logger.Info("启动服务 - http - " + host + ":" + os.Getenv("server.port"))
 		}
-		err = http.ListenAndServe(host+":"+os.Getenv("server.port"), self)
+		err = http.ListenAndServe(os.Getenv("server.host")+":"+os.Getenv("server.port"), self)
 	case "https":
 		if self.logger.GetLevel() <= INFO {
+			host := os.Getenv("server.host")
 			if host == "" {
 				host = "127.0.0.1"
 			}
 			self.logger.Info("启动服务 - https - " + host + ":" + os.Getenv("server.port"))
 		}
-		err = http.ListenAndServeTLS(host+":"+os.Getenv("server.port"), os.Getenv("server.cert"), os.Getenv("server.key"), self)
+		err = http.ListenAndServeTLS(os.Getenv("server.host")+":"+os.Getenv("server.port"), os.Getenv("server.cert"), os.Getenv("server.key"), self)
 	default:
-		panic("找不到服务启动的方式.")
+		panic("找不到服务启动的方式 - http/https")
 	}
 
 	if err != nil {
