@@ -36,7 +36,7 @@ type _FILE struct {
 	lg      *log.Logger
 }
 
-// 日期格式
+// 日期格式（用于文件名）
 const DATEFORMAT = "2006-01-02"
 
 // 日志级别
@@ -50,7 +50,7 @@ const (
 	OFF
 )
 
-// 文件大小但闻
+// 文件大小
 const (
 	_       = iota
 	KB UNIT = 1 << (iota * 10)
