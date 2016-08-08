@@ -72,7 +72,7 @@ server.protocol=http
 server.host=
 server.port=8080
 
-log.level=warn
+log.level=debug
 log.console=true
 log.rollingfile=false
 log.dailyfile=false
