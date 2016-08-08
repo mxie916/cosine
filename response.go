@@ -14,7 +14,7 @@
 
 package cosine
 
-// Cosine返回值结构体
+// Cosine返回值封装
 type Response struct {
 	Code    int         `json:"code"`
 	Message string      `json:"message"`
