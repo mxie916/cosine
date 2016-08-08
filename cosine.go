@@ -204,7 +204,7 @@ func (self *Cosine) Run() {
 			if host == "" {
 				host = "127.0.0.1"
 			}
-			self.logger.Info("服务启动: https://" + host + ":" + os.Getenv("server.port"))
+			self.logger.Info("启动服务 - https - " + host + ":" + os.Getenv("server.port"))
 		}
 		err = http.ListenAndServeTLS(host+":"+os.Getenv("server.port"), os.Getenv("server.cert"), os.Getenv("server.key"), self)
 	default:
