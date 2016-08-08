@@ -63,7 +63,7 @@ func main() {
 }
 ```
 
-# 配置文件示例config.json
+# 配置文件示例config.ini
 ```ini
 cosine.env=development
 
