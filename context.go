@@ -20,12 +20,12 @@ import (
 	"reflect"
 )
 
-// Cosine上下文结构体
+// Cosine上下文
 type Context struct {
 	*Cosine
 	params map[string]interface{}
-	Data   []byte
 	injts  map[reflect.Type]reflect.Value
+	Data   []byte
 	Req    *http.Request
 	Res    *Response
 }
