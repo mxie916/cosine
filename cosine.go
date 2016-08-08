@@ -15,12 +15,14 @@
 package cosine
 
 import (
+	"bufio"
 	"encoding/json"
-	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"reflect"
-	"strconv"
+	"strings"
 )
 
 const _VERSION = "1.0.0708"
@@ -33,6 +35,55 @@ func Version() string {
 // 处理器
 type Handler interface{}
 
+// 初始化
+func init() {
+	// 文件读取
+	fp, err := os.Open("config.ini")
+	if err != nil {
+		panic(err)
+	}
+	reader := bufio.NewReader(fp)
+
+	// 循环读取ini文件中的数据
+	var currentSection, envSection string
+	for {
+		line, _, err := reader.ReadLine()
+		if err == io.EOF {
+			break
+		}
+		l := strings.TrimSpace(string(line))
+
+		// 跳过空行和注释
+		if len(l) == 0 || l[0] == '#' {
+			continue
+		}
+
+		// 获取section名称
+		if l[0] == '[' {
+			currentSection = strings.TrimSpace(l[1 : len(l)-1])
+			continue
+		}
+
+		// 跳过无用的配置
+		if envSection != "" && envSection != currentSection {
+			continue
+		}
+
+		parts := strings.SplitN(l, "=", 2)
+		// 跳过异常配置
+		if len(parts) != 2 {
+			continue
+		}
+
+		// 将ini文件的kv存入系统环境变量中
+		name, value := strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1])
+		os.Setenv(name, value)
+		if name == "consine.env" {
+			envSection = value
+		}
+	}
+}
+
 // 校验处理器
 func chkHandler(h Handler) {
 	if reflect.TypeOf(h).Kind() != reflect.Func {
@@ -40,41 +91,32 @@ func chkHandler(h Handler) {
 	}
 }
 
+// Cosine结构体
 type Cosine struct {
 	*Router
+	logger   *Logger
 	handlers []Handler
-	protocol string
-	host     string
-	port     int
 }
 
 // 获取Cosine实例
-func New(args ...string) *Cosine {
+func New() *Cosine {
 	// 初始化Cosine
 	cos := &Cosine{
+		logger: newLogger(),
 		Router: &Router{
 			urls: make(map[string][]*url),
 		},
 	}
-
-	// 读取配置文件
-	config := &Config{}
-	if len(args) > 0 {
-		config.load(args[0])
-	} else {
-		config.load("config.json")
-	}
-
-	// 初始化服务启动参数
-	cos.protocol = config.Get("server.protocol").(string)
-	cos.host = config.Get("server.host").(string)
-	cos.port = int(config.Get("server.port").(float64))
 
 	return cos
 }
 
 // 实现http.Handler接口
 func (self *Cosine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if self.logger.GetLevel() <= DEBUG {
+		self.logger.Debug(r.RemoteAddr + " - " + r.Method + " - " + r.RequestURI)
+	}
+
 	path := r.URL.Path
 	l := len(path)
 	// 处理以"/"结束的请求
@@ -102,6 +144,7 @@ func (self *Cosine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// 将Context添加为内置对象
 	ctx.Map(ctx)
+	ctx.Map(self.logger)
 
 	// 匹配请求对应的处理器
 	if handlers, vars, ok := self.Router.match(r.Method, path); ok {
@@ -146,17 +189,29 @@ func (self *Cosine) Use(h Handler) {
 // 运行Cosine
 func (self *Cosine) Run() {
 	var err error
-	switch self.protocol {
+	host := os.Getenv("server.host")
+	switch os.Getenv("server.protocol") {
 	case "http":
-		err = http.ListenAndServe(self.host+":"+strconv.Itoa(self.port), self)
+		if self.logger.GetLevel() <= INFO {
+			if host == "" {
+				host = "127.0.0.1"
+			}
+			self.logger.Info("启动服务 - http - " + host + ":" + os.Getenv("server.port"))
+		}
+		err = http.ListenAndServe(host+":"+os.Getenv("server.port"), self)
 	case "https":
-		err = http.ListenAndServeTLS(self.host+":"+strconv.Itoa(self.port), "cert.pem", "key.pem", self)
+		if self.logger.GetLevel() <= INFO {
+			if host == "" {
+				host = "127.0.0.1"
+			}
+			self.logger.Info("服务启动: https://" + host + ":" + os.Getenv("server.port"))
+		}
+		err = http.ListenAndServeTLS(host+":"+os.Getenv("server.port"), os.Getenv("server.cert"), os.Getenv("server.key"), self)
 	default:
-		panic("服务启动失败.")
+		panic("找不到服务启动的方式.")
 	}
 
-	// TODO
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
 }

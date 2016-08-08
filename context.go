@@ -20,6 +20,7 @@ import (
 	"reflect"
 )
 
+// Cosine上下文结构体
 type Context struct {
 	*Cosine
 	params map[string]interface{}

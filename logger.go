@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -57,6 +59,7 @@ const (
 	TB
 )
 
+// 日志结构体
 type Logger struct {
 	logLevel        LEVEL
 	consoleFlag     bool
@@ -66,6 +69,70 @@ type Logger struct {
 	currentFileDate *time.Time
 	logObj          *_FILE
 	lg              *log.Logger
+}
+
+// 实例化Logger对象
+func newLogger() *Logger {
+	logger := new(Logger)
+	if os.Getenv("log.level") == "" {
+		logger.SetLevel(ALL)
+	} else {
+		switch strings.ToLower(os.Getenv("log.level")) {
+		case "all":
+			logger.SetLevel(ALL)
+		case "debug":
+			logger.SetLevel(DEBUG)
+		case "info":
+			logger.SetLevel(INFO)
+		case "warn":
+			logger.SetLevel(WARN)
+		case "error":
+			logger.SetLevel(ERROR)
+		case "fatal":
+			logger.SetLevel(FATAL)
+		case "off":
+			logger.SetLevel(OFF)
+		default:
+			panic("日志级别配置错误")
+		}
+	}
+	if os.Getenv("log.console") != "" {
+		switch strings.ToLower(os.Getenv("log.console")) {
+		case "true":
+			logger.SetConsole(true)
+		case "false":
+			logger.SetConsole(false)
+		default:
+			panic("控制台日志输出配置错误")
+		}
+	} else {
+		logger.SetConsole(true)
+	}
+	if strings.ToLower(os.Getenv("log.rollingfile")) == "true" {
+		maxSize, err := strconv.ParseInt(os.Getenv("log.maxsize"), 10, 64)
+		if err != nil {
+			panic("日志滚动大小配置错误")
+		}
+		var _unit UNIT
+		switch strings.ToLower(os.Getenv("log.sizeunit")) {
+		case "kb":
+			_unit = KB
+		case "mb":
+			_unit = MB
+		case "gb":
+			_unit = GB
+		case "tb":
+			_unit = TB
+		default:
+			panic("日志大小单位配置错误")
+		}
+		logger.SetRollingFile(os.Getenv("log.dir"), os.Getenv("log.file"), maxSize, _unit)
+	}
+	if strings.ToLower(os.Getenv("log.dailyfile")) == "true" {
+		logger.SetDailyFile(os.Getenv("log.dir"), os.Getenv("log.file"))
+	}
+
+	return logger
 }
 
 // 设置日志级别
