@@ -227,12 +227,12 @@ func (self *Logger) Debug(v ...interface{}) {
 
 // 打印INFO级别日志
 func (self *Logger) Info(v ...interface{}) {
-	self.filePrint(INFO, "[INFO ]", v)
+	self.filePrint(INFO, "[INFO]", v)
 }
 
 // 打印WARN级别日志
 func (self *Logger) Warn(v ...interface{}) {
-	self.filePrint(WARN, "[WARN ]", v)
+	self.filePrint(WARN, "[WARN]", v)
 }
 
 // 打印ERROR级别日志
