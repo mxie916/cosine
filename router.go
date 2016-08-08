@@ -68,9 +68,9 @@ func (self *Router) DELETE(path string, handlers ...Handler) {
 
 // 添加路由组别
 func (self *Router) GROUP(name string, fn func()) {
-	self.prefix = name
+	self.prefix += name
 	fn()
-	self.prefix = ""
+	self.prefix = self.prefix[0 : len(self.prefix)-len(name)]
 }
 
 // 统一处理请求
