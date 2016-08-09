@@ -16,43 +16,53 @@
 ```go
 package main
 
-import (
-	"fmt"
-
-	"github.com/mxie916/cosine"
-)
+import "github.com/mxie916/cosine"
 
 type P struct {
 	Name string `json:"name"`
 }
 
-func Home(ctx *cosine.Context) {
+func Home(ctx *cosine.Context, logger *cosine.Logger) {
+	// 接收请求中的参数
+	p := new(P)
+	ctx.DataToJSON(p)
+	logger.Info(p.Name)
+
+	// 正常返回数据
 	res := make(map[string]string)
 	res["Name"] = "Cosine"
 	res["Version"] = cosine.Version()
-	
-	p := new(P)
-	ctx.DataToJSON(p)
-	fmt.Println(p.Name)
-
 	ctx.Res.DataWrapper(res)
 }
 
 func Group1(ctx *cosine.Context) {
+	// 自定义业务异常及异常代码
 	ctx.Res.ExceptionWrapper(10001, "业务逻辑异常描述")
 }
 
 func Group2(ctx *cosine.Context) {
+	// 返回禁止访问
 	ctx.Res.ForbiddenWrapper()
+}
+
+func Group3(ctx *cosine.Context) {
+	// 返回超过访问频次
+	ctx.Res.LimitZoneWrapper()
 }
 
 func main() {
 	cos := cosine.New()
 
+	// 多级路由
 	cos.POST("/", Home)
 	cos.GROUP("/v1", func() {
-		cos.GET("/group1", Group1)
-		cos.GET("/group2", Group2)
+		cos.GROUP("/user", func() {
+			cos.GET("/group2", Group2)
+		})
+		cos.DELETE("/group1", Group1)
+	})
+	cos.GROUP("/v2", func() {
+		cos.PUT("/group3", Group3)
 	})
 
 	cos.Run()
@@ -67,14 +77,29 @@ cosine.env=development
 server.protocol=http
 server.host=
 server.port=8080
+# 配置SSL证书（https协议使用）
+#server.crt=
+#server.key=
 
+# 日志输出级别
 log.level=debug
+# 是否在控制台输出，默认：true
 log.console=true
+# 是否开启按日志文件大小进行滚动输出，默认：false
 log.rollingfile=false
+# 是否开启按日志日期进行滚动输出，默认：false
 log.dailyfile=false
+
+# rollingfile模式配置参数
+# 文件滚动大小，数值
 #log.maxsize=
+# maxsize的单位（KB、MB、GB、TB）
 #log.sizeunit=
+
+# rollingfile&dailyfile模式共同配置参数
+# 日志路径
 #log.dir=
+# 日志文件名
 #log.file=
 ```
 
